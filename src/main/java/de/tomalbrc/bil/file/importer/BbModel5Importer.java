@@ -31,6 +31,11 @@ public class BbModel5Importer extends BbModelImporter {
     }
 
     protected void postProcess(BbModel model) {
+        // BbOutliner.name is unused in the 5.x/AJ format (names live on BbGroup instead), but
+        // isHitbox() and every caller of it still read outliner.name. Backfill it here, once,
+        // before anything checks isHitbox(), so a "hitbox" group is actually skipped.
+        assignGroupNames(model, model.outliner);
+
         for (BbElement element : model.elements) {
             if (element.type != BbElement.ElementType.CUBE_MODEL) continue;
 
@@ -80,6 +85,18 @@ public class BbModel5Importer extends BbModelImporter {
                     element.origin.sub(group.origin).mul(scale).add(8, 8, 8);
                 }
             }
+        }
+    }
+
+    private void assignGroupNames(BbModel model, Collection<BbOutliner.ChildEntry> children) {
+        for (BbOutliner.ChildEntry entry : children) {
+            if (!entry.isNode()) continue;
+
+            BbOutliner outliner = entry.outliner;
+            BbGroup group = BbModelUtils.getGroup(model, outliner);
+            if (group != null) outliner.name = group.name;
+
+            assignGroupNames(model, outliner.children);
         }
     }
 
