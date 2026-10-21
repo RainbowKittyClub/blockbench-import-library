@@ -107,6 +107,18 @@ publishing {
 
     repositories {
         mavenLocal()
+        // RKC fork: publish-maven.yml sets these to publish an -rkc tag to GitHub Packages.
+        def mavenUrl = System.getenv('MAVEN_URL')
+        if (mavenUrl) {
+            maven {
+                name = 'GitHubPackages'
+                url = mavenUrl
+                credentials {
+                    username = System.getenv('MAVEN_USERNAME')
+                    password = System.getenv('MAVEN_PASSWORD')
+                }
+            }
+        }
     }
 }
 
