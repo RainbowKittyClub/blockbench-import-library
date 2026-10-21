@@ -1,0 +1,57 @@
+name: Publish Maven package
+
+# RKC fork only: a v<mod_version>+<minecraft_version> tag, its mod_version carrying -rkc.<n>,
+# publishes the jar to this repository's GitHub Packages. Upstream's gradle.yml makes the GitHub
+# release for the same tag.
+on:
+  push:
+    tags:
+      - "v*-rkc.*"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Check the tag against gradle.properties
+        run: |
+          prop() {
+            sed -nE "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*([^[:space:]]+)[[:space:]]*$/\1/p" gradle.properties | head -n1
+          }
+          mod_version="$(prop mod_version)"
+          minecraft_version="$(prop minecraft_version)"
+          if [ -z "$mod_version" ] || [ -z "$minecraft_version" ]; then
+            echo "gradle.properties lacks mod_version or minecraft_version" >&2
+            exit 1
+          fi
+          case "$mod_version" in
+            *-rkc.*) ;;
+            *) echo "mod_version ${mod_version} lacks -rkc.<n>" >&2; exit 1 ;;
+          esac
+          if [ "${GITHUB_REF_NAME}" != "v${mod_version}+${minecraft_version}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} must be v${mod_version}+${minecraft_version}" >&2
+            exit 1
+          fi
+
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 25
+          cache: gradle
+
+      - name: Build and publish
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon build publish
+        env:
+          MAVEN_URL: https://maven.pkg.github.com/${{ github.repository }}
+          MAVEN_USERNAME: ${{ github.actor }}
+          MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
