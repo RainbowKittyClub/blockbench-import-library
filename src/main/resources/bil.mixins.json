@@ -6,7 +6,6 @@
   "mixins": [
     "LivingEntityMixin",
     "accessor.LivingEntityAccessor",
-    "accessor.ServerCommonPacketListenerImplAccessor",
     "accessor.SimpleDataTrackerAccessor",
     "async.ChunkMapMixin",
     "async.MinecraftServerMixin",
@@ -15,6 +14,7 @@
     "packet.ClientboundSetEntityLinkPacketMixin",
     "packet.ClientboundSetPassengersPacketMixin",
     "packet.LivingEntityMixin",
+    "packet.ServerCommonPacketListenerImplMixin",
     "tracking.EntityMixin",
     "tracking.SynchedEntityDataMixin"
   ],

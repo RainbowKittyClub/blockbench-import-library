@@ -2,6 +2,7 @@ package de.tomalbrc.bil;
 
 import com.mojang.logging.LogUtils;
 import de.tomalbrc.bil.command.BILCommand;
+import de.tomalbrc.bil.util.AsyncTickThread;
 import de.tomalbrc.bil.util.ResourcePackUtil;
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
 import gg.moonflower.molangcompiler.api.MolangCompiler;
@@ -12,12 +13,11 @@ import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class BIL implements ModInitializer {
     public static final Logger LOGGER = LogUtils.getLogger();
     public static MolangCompiler COMPILER = MolangCompiler.create(MolangCompiler.DEFAULT_FLAGS, BIL.class.getClassLoader());
-    public static ExecutorService EXECUTOR = Executors.newWorkStealingPool();
+    public static ExecutorService EXECUTOR = AsyncTickThread.newPool();
     public static MinecraftServer SERVER;
 
     @Override
