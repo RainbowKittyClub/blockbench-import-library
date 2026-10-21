@@ -2,22 +2,14 @@ package de.tomalbrc.bil.util;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import de.tomalbrc.bil.mixin.accessor.ServerCommonPacketListenerImplAccessor;
-import eu.pb4.polymer.core.impl.networking.PacketPatcher;
 import eu.pb4.polymer.virtualentity.api.data.EntityData;
 import eu.pb4.polymer.virtualentity.api.data.InteractionEntityData;
 import eu.pb4.polymer.virtualentity.api.elements.InteractionElement;
-import io.netty.channel.ChannelFutureListener;
-import net.minecraft.CrashReport;
-import net.minecraft.CrashReportCategory;
-import net.minecraft.ReportedException;
-import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.server.network.ServerCommonPacketListenerImpl;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityDimensions;
@@ -32,10 +24,6 @@ import java.util.List;
 public class Utils {
     public static final ServerGamePacketListenerImpl[] EMPTY_CONNECTION_ARRAY = new ServerGamePacketListenerImpl[0];
     public static final Vector3fc ZERO_VEC3F = new Vector3f();
-
-    public static Connection getConnection(ServerCommonPacketListenerImpl networkHandler) {
-        return ((ServerCommonPacketListenerImplAccessor) networkHandler).getConnection();
-    }
 
     public static CommandSyntaxException buildCommandException(String message) {
         return new SimpleCommandExceptionType(Component.literal(message)).create();
@@ -71,32 +59,6 @@ public class Utils {
                         SynchedEntityData.DataValue.create(InteractionEntityData.HEIGHT, dimensions.height())
                 ))
         );
-    }
-
-    /**
-     * TODO: This implementation might be out of date, it was originally designed for 1.20
-     * Vanilla + Polymer copy of {@link ServerCommonPacketListenerImpl#send(Packet, ChannelFutureListener)} but without flushing the connection.
-     * <p>
-     * we will often have to send a ton of separate packet from a different thread.
-     * Even though we always make sure to start and finish this process before player connection flushing gets resumed at the end of the game tick,
-     * the normal send method will still flush the connection for every packet, causing a significant downgrade in network performance and ping.
-     */
-    public static void sendPacketNoFlush(ServerCommonPacketListenerImpl networkHandler, Packet<? extends ClientGamePacketListener> packet) {
-        Packet<?> modifiedPacket = PacketPatcher.replace(networkHandler, packet);
-        if (PacketPatcher.prevent(networkHandler, modifiedPacket)) {
-            return;
-        }
-
-        try {
-            Utils.getConnection(networkHandler).send(modifiedPacket, null, false);
-        } catch (Throwable throwable) {
-            CrashReport report = CrashReport.forThrowable(throwable, "Sending packet");
-            CrashReportCategory category = report.addCategory("Packet being sent");
-            category.setDetail("Packet class", () -> modifiedPacket.getClass().getCanonicalName());
-            throw new ReportedException(report);
-        }
-
-        PacketPatcher.sendExtra(networkHandler, packet);
     }
 
     /**
