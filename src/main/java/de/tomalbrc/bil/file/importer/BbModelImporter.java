@@ -5,6 +5,7 @@ import de.tomalbrc.bil.file.bbmodel.*;
 import de.tomalbrc.bil.file.extra.BbModelUtils;
 import de.tomalbrc.bil.file.extra.BbResourcePackGenerator;
 import de.tomalbrc.bil.file.extra.ResourcePackModel;
+import de.tomalbrc.bil.file.extra.ZeroDefaultObject;
 import de.tomalbrc.bil.json.CachedUuidDeserializer;
 import de.tomalbrc.bil.util.Utils;
 import de.tomalbrc.bil.util.command.CommandParser;
@@ -426,6 +427,7 @@ public class BbModelImporter implements ModelImporter<BbModel> {
                             .setQuery("life_time", time)
                             .setQuery("anim_time", time)
                             .create();
+                    ZeroDefaultObject.install(env);
 
                     // pose for bone in list of frames for an animation
                     Reference2ObjectOpenHashMap<UUID, Pose> poses = poses(anim, nodeMap, env, time);
