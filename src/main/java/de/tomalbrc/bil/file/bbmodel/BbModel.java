@@ -29,6 +29,8 @@ public class BbModel {
 
     @SerializedName("animation_variable_placeholders")
     public BbVariablePlaceholders animationVariablePlaceholders; // aj support
+    @SerializedName("variable_placeholder_buttons")
+    public ObjectArrayList<BbPlaceholderButton> placeholderButtons;
 
     // ajblueprint support
     public AjBlueprintVariants variants;

@@ -9,6 +9,7 @@ import de.tomalbrc.bil.json.CachedUuidDeserializer;
 import de.tomalbrc.bil.util.Utils;
 import de.tomalbrc.bil.util.command.CommandParser;
 import gg.moonflower.molangcompiler.api.MolangEnvironment;
+import gg.moonflower.molangcompiler.api.MolangEnvironmentBuilder;
 import gg.moonflower.molangcompiler.api.MolangRuntime;
 import gg.moonflower.molangcompiler.api.exception.MolangRuntimeException;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -416,7 +417,12 @@ public class BbModelImporter implements ModelImporter<BbModel> {
                 for (int i = 0; i < frameCount; i++) {
                     float time = i * step;
 
-                    MolangEnvironment env = MolangRuntime.runtime()
+                    // placeholders first, so the built-in queries win as they do in Blockbench
+                    MolangEnvironmentBuilder<MolangRuntime> builder = MolangRuntime.runtime();
+                    if (this.model.animationVariablePlaceholders != null)
+                        this.model.animationVariablePlaceholders.bind(builder, this.model.placeholderButtons);
+
+                    MolangEnvironment env = builder
                             .setQuery("life_time", time)
                             .setQuery("anim_time", time)
                             .create();

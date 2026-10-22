@@ -118,13 +118,11 @@ public class BbKeyframe implements Comparable<BbKeyframe> {
                 return this.value;
             }
 
-            // dirty hack, caching the molang expression for performance,
-            // would be better to post-process the expressions as string,
-            // for the placeholder substitution
+            // the rewrite names placeholders, never their values, so the compiled expression can be cached
             if (this.molangExpression == null) {
                 String modifiedExpression = this.stringValue;
                 if (placeholders != null)
-                    modifiedExpression = placeholders.substituteVariables(this.stringValue);
+                    modifiedExpression = placeholders.rewrite(this.stringValue);
 
                 try {
                     this.molangExpression = BIL.COMPILER.compile(MolangCompat.negatedGroups(modifiedExpression));
