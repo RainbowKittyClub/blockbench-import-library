@@ -3,17 +3,18 @@ package de.tomalbrc.bil.file.bbmodel;
 import com.google.gson.annotations.SerializedName;
 import de.tomalbrc.bil.BIL;
 import de.tomalbrc.bil.file.extra.BbVariablePlaceholders;
+import de.tomalbrc.bil.file.extra.MolangCompat;
 import de.tomalbrc.bil.file.extra.easing.EasingType;
 import de.tomalbrc.bil.file.extra.interpolation.Interpolation;
 import gg.moonflower.molangcompiler.api.MolangEnvironment;
 import gg.moonflower.molangcompiler.api.MolangExpression;
 import gg.moonflower.molangcompiler.api.exception.MolangRuntimeException;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.joml.Vector3f;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
 public class BbKeyframe implements Comparable<BbKeyframe> {
@@ -71,6 +72,7 @@ public class BbKeyframe implements Comparable<BbKeyframe> {
     }
 
     static public class DataPointValue {
+        private static final Pattern NUMBER = Pattern.compile("[-+]?(\\d+\\.?\\d*|\\.\\d+)([eE][-+]?\\d+)?");
         public static DataPointValue BLANK = new BbKeyframe.DataPointValue("");
 
         private float value;
@@ -107,26 +109,25 @@ public class BbKeyframe implements Comparable<BbKeyframe> {
             if (this.stringValue == null)
                 return this.value;
 
-            var length = this.stringValue.trim().length();
-            if (length <= 2 || NumberUtils.isParsable(this.stringValue)) {
-                if (length == 0 || this.stringValue.equals("-") || this.stringValue.equals("+") || this.stringValue.equals(".") || this.stringValue.equals(","))
-                    return 0;
+            String trimmed = this.stringValue.trim();
+            if (trimmed.isEmpty() || trimmed.equals("-") || trimmed.equals("+") || trimmed.equals(".") || trimmed.equals(","))
+                return 0;
 
-                this.value = Float.parseFloat(this.stringValue.trim());
+            // Blockbench writes numbers like "1." and ".5", which Molang can't parse
+            if (NUMBER.matcher(trimmed).matches()) {
+                this.value = Float.parseFloat(trimmed);
                 this.stringValue = null;
                 return this.value;
             }
 
-            // dirty hack, caching the molang expression for performance,
-            // would be better to post-process the expressions as string,
-            // for the placeholder substitution
+            // the rewrite names placeholders, never their values, so the compiled expression can be cached
             if (this.molangExpression == null) {
                 String modifiedExpression = this.stringValue;
                 if (placeholders != null)
-                    modifiedExpression = placeholders.substituteVariables(this.stringValue);
+                    modifiedExpression = placeholders.rewrite(this.stringValue);
 
                 try {
-                    this.molangExpression = BIL.COMPILER.compile(modifiedExpression);
+                    this.molangExpression = BIL.COMPILER.compile(MolangCompat.negatedGroups(modifiedExpression));
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }

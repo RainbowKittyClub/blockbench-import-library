@@ -5,10 +5,13 @@ import de.tomalbrc.bil.file.bbmodel.*;
 import de.tomalbrc.bil.file.extra.BbModelUtils;
 import de.tomalbrc.bil.file.extra.BbResourcePackGenerator;
 import de.tomalbrc.bil.file.extra.ResourcePackModel;
+import de.tomalbrc.bil.file.extra.ZeroDefaultObject;
 import de.tomalbrc.bil.json.CachedUuidDeserializer;
+import de.tomalbrc.bil.util.ResourcePackUtil;
 import de.tomalbrc.bil.util.Utils;
 import de.tomalbrc.bil.util.command.CommandParser;
 import gg.moonflower.molangcompiler.api.MolangEnvironment;
+import gg.moonflower.molangcompiler.api.MolangEnvironmentBuilder;
 import gg.moonflower.molangcompiler.api.MolangRuntime;
 import gg.moonflower.molangcompiler.api.exception.MolangRuntimeException;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -43,7 +46,8 @@ public class BbModelImporter implements ModelImporter<BbModel> {
             for (int i = 0; i < face.uv.size(); i++) {
                 Vector2i textureResolution = null;
 
-                var texture = textures.stream().filter(x -> face.texture.matches(x)).findFirst().orElse(textures.getFirst());
+                int index = face.texture.indexIn(textures);
+                var texture = textures.get(Math.max(index, 0));
                 if (texture.uvHeight != 0 && texture.uvWidth != 0)
                     textureResolution = new Vector2i(texture.uvWidth, texture.uvHeight);
 
@@ -416,10 +420,16 @@ public class BbModelImporter implements ModelImporter<BbModel> {
                 for (int i = 0; i < frameCount; i++) {
                     float time = i * step;
 
-                    MolangEnvironment env = MolangRuntime.runtime()
+                    // placeholders first, so the built-in queries win as they do in Blockbench
+                    MolangEnvironmentBuilder<MolangRuntime> builder = MolangRuntime.runtime();
+                    if (this.model.animationVariablePlaceholders != null)
+                        this.model.animationVariablePlaceholders.bind(builder, this.model.placeholderButtons);
+
+                    MolangEnvironment env = builder
                             .setQuery("life_time", time)
                             .setQuery("anim_time", time)
                             .create();
+                    ZeroDefaultObject.install(env);
 
                     // pose for bone in list of frames for an animation
                     Reference2ObjectOpenHashMap<UUID, Pose> poses = poses(anim, nodeMap, env, time);
@@ -460,11 +470,14 @@ public class BbModelImporter implements ModelImporter<BbModel> {
 
     @Override
     public Model importModel() {
-        var nodeMap = this.makeNodeMap();
-        var defaultPose = this.defaultPose(nodeMap);
-        var animations = this.animations(nodeMap);
-        var variants = this.variants();
+        // a model that fails part way leaves nothing in the resource pack
+        return ResourcePackUtil.staged(() -> {
+            var nodeMap = this.makeNodeMap();
+            var defaultPose = this.defaultPose(nodeMap);
+            var animations = this.animations(nodeMap);
+            var variants = this.variants();
 
-        return new Model(nodeMap, defaultPose, variants, animations, this.size());
+            return new Model(nodeMap, defaultPose, variants, animations, this.size());
+        });
     }
 }

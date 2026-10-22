@@ -62,9 +62,10 @@ public class AjModelImporter extends BbModelImporter implements ModelImporter<Bb
                         if (variant.textureMap() == null || variant.textureMap().isEmpty()) {
                             textureMap = makeDefaultTextureMap();
                         } else {
-                            for (BbTexture e : model.textures) {
+                            for (int i = 0; i < model.textures.size(); i++) {
+                                BbTexture e = model.textures.get(i);
                                 BbTexture newMapped = variant.textureMap().containsKey(e.uuid) ? BbModelUtils.getTexture(model, variant.textureMap().get(e.uuid)) : e;
-                                textureMap.put(e.id, newMapped);
+                                textureMap.put(i, newMapped);
                             }
                         }
 
