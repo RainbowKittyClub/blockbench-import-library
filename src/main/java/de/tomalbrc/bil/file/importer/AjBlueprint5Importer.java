@@ -36,9 +36,10 @@ public class AjBlueprint5Importer extends BbModel5Importer implements ModelImpor
                     continue;
                 }
 
-                var tex = model.textures.stream().filter(x -> entry.getValue().texture.matches(x)).findFirst().orElse(null);
-                if (tex != null)
-                    entry.getValue().texture.setId(tex.id);
+                // the texture map is keyed by index, as a .bbmodel face names it
+                int index = entry.getValue().texture.indexIn(model.textures);
+                if (index >= 0)
+                    entry.getValue().texture.setId(index);
             }
         }
 
@@ -89,9 +90,10 @@ public class AjBlueprint5Importer extends BbModel5Importer implements ModelImpor
                         if (variant.textureMap() == null || variant.textureMap().isEmpty()) {
                             textureMap = makeDefaultTextureMap();
                         } else {
-                            for (BbTexture e : model.textures) {
+                            for (int i = 0; i < model.textures.size(); i++) {
+                                BbTexture e = model.textures.get(i);
                                 BbTexture newMapped = variant.textureMap().containsKey(e.uuid) ? BbModelUtils.getTexture(model, variant.textureMap().get(e.uuid)) : e;
-                                textureMap.putIfAbsent(e.id, newMapped);
+                                textureMap.put(i, newMapped);
                             }
                         }
 

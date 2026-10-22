@@ -45,7 +45,8 @@ public class BbModelImporter implements ModelImporter<BbModel> {
             for (int i = 0; i < face.uv.size(); i++) {
                 Vector2i textureResolution = null;
 
-                var texture = textures.stream().filter(x -> face.texture.matches(x)).findFirst().orElse(textures.getFirst());
+                int index = face.texture.indexIn(textures);
+                var texture = textures.get(Math.max(index, 0));
                 if (texture.uvHeight != 0 && texture.uvWidth != 0)
                     textureResolution = new Vector2i(texture.uvWidth, texture.uvHeight);
 

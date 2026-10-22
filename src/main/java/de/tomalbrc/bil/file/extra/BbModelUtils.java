@@ -17,7 +17,7 @@ public class BbModelUtils {
 
     public static BbTexture getTexture(BbModel model, UUID uuid) {
         for (BbTexture element : model.textures) {
-            if (element.uuid == uuid)
+            if (uuid != null && uuid.equals(element.uuid))
                 return element;
         }
         return null;
