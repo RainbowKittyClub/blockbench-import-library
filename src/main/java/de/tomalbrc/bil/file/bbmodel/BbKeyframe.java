@@ -3,6 +3,7 @@ package de.tomalbrc.bil.file.bbmodel;
 import com.google.gson.annotations.SerializedName;
 import de.tomalbrc.bil.BIL;
 import de.tomalbrc.bil.file.extra.BbVariablePlaceholders;
+import de.tomalbrc.bil.file.extra.MolangCompat;
 import de.tomalbrc.bil.file.extra.easing.EasingType;
 import de.tomalbrc.bil.file.extra.interpolation.Interpolation;
 import gg.moonflower.molangcompiler.api.MolangEnvironment;
@@ -126,7 +127,7 @@ public class BbKeyframe implements Comparable<BbKeyframe> {
                     modifiedExpression = placeholders.substituteVariables(this.stringValue);
 
                 try {
-                    this.molangExpression = BIL.COMPILER.compile(modifiedExpression);
+                    this.molangExpression = BIL.COMPILER.compile(MolangCompat.negatedGroups(modifiedExpression));
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
