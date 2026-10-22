@@ -7,6 +7,7 @@ import de.tomalbrc.bil.file.extra.BbResourcePackGenerator;
 import de.tomalbrc.bil.file.extra.ResourcePackModel;
 import de.tomalbrc.bil.file.extra.ZeroDefaultObject;
 import de.tomalbrc.bil.json.CachedUuidDeserializer;
+import de.tomalbrc.bil.util.ResourcePackUtil;
 import de.tomalbrc.bil.util.Utils;
 import de.tomalbrc.bil.util.command.CommandParser;
 import gg.moonflower.molangcompiler.api.MolangEnvironment;
@@ -469,11 +470,14 @@ public class BbModelImporter implements ModelImporter<BbModel> {
 
     @Override
     public Model importModel() {
-        var nodeMap = this.makeNodeMap();
-        var defaultPose = this.defaultPose(nodeMap);
-        var animations = this.animations(nodeMap);
-        var variants = this.variants();
+        // a model that fails part way leaves nothing in the resource pack
+        return ResourcePackUtil.staged(() -> {
+            var nodeMap = this.makeNodeMap();
+            var defaultPose = this.defaultPose(nodeMap);
+            var animations = this.animations(nodeMap);
+            var variants = this.variants();
 
-        return new Model(nodeMap, defaultPose, variants, animations, this.size());
+            return new Model(nodeMap, defaultPose, variants, animations, this.size());
+        });
     }
 }
